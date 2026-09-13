@@ -1,4 +1,4 @@
-# Cortex QRTOS — Domain Models & Database Schema
+# CORTEX — Domain Models & Database Schema
 
 ## Domain Entity-Relationship Diagram
 

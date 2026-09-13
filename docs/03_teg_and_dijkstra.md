@@ -1,10 +1,10 @@
-# Cortex QRTOS — Time-Expanded Graph (TEG) & Modified Dijkstra
+# CORTEX — Time-Expanded Graph (TEG) & Modified Dijkstra
 
 ## Mathematical Foundations
 
 A standard static railway topology graph $G=(V, E)$ cannot capture temporal exclusivity: two trains cannot occupy the same single-track block at the same time, even though they can occupy it at different times.
 
-To solve this, Cortex constructs a **Time-Expanded Graph (TEG)**, expanding spatial vertices across discrete time steps $\tau \in \{0, 1, \dots, T\}$.
+To solve this, CORTEX constructs a **Time-Expanded Graph (TEG)**, expanding spatial vertices across discrete time steps $\tau \in \{0, 1, \dots, T\}$.
 
 ---
 

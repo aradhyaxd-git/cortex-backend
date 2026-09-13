@@ -1,4 +1,4 @@
-# Cortex QRTOS — Developer Guide & Git Workflow
+# CORTEX — Developer Guide & Git Workflow
 
 This guide covers local environment setup, testing, running the backend server, and the engineering contribution workflow.
 

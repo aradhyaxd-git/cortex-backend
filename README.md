@@ -1,8 +1,9 @@
-# Cortex QRTOS
+# CORTEX
 
-> **Quasi-Real-Time Operating System for Intelligent Railway Dispatching & Conflict Resolution**
+> **Constraint-Optimised Real-Time Traffic EXpert**  
+> *An Intelligent Real-Time Decision-Support System for Indian Railways Traffic Management using Time-Expanded Graph Search, Constraint Programming, Machine Learning, and Generative AI Explainability.*
 
-Cortex QRTOS is an autonomous and human-in-the-loop train dispatching platform designed to resolve bottlenecks, headway violations, and opposing-train meets across single-track rail corridors. It combines **Augmented Interval Trees**, **Time-Expanded Graphs (TEG)**, and **Modified Dijkstra Pathfinding** to calculate mathematically optimal dispatch decisions with full explainability.
+**CORTEX** is an advisory, human-in-the-loop train traffic decision-support platform designed for Indian Railways single-track corridors. It resolves train precedence, crossing loop bottlenecks, and headway constraints by combining **Augmented Interval Trees**, **Time-Expanded Graphs (TEG)**, **Modified Dijkstra Pathfinding**, and **CP-SAT Constraint Optimization** to calculate mathematically optimal, conflict-free dispatch recommendations with natural language explainability.
 
 ---
 
