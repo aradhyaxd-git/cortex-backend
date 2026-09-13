@@ -1,10 +1,10 @@
-# Cortex QRTOS — API Contracts Matrix
+# CORTEX — API Contracts Matrix
 
 ## Visual & Telemetry Endpoints Specification
 
 ![API Endpoints Matrix](images/api_endpoints_matrix.png)
 
-This document specifies the complete REST and WebSocket interface for Cortex QRTOS, matching the system routing table shown above.
+This document specifies the complete REST and WebSocket interface for CORTEX, matching the system routing table shown above.
 
 ---
 

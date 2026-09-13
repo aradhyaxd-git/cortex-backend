@@ -1,4 +1,4 @@
-# Cortex QRTOS Backend Dependencies
+# CORTEX (Constraint-Optimised Real-Time Traffic EXpert) Dependencies
 
 # Core Web Framework & ASGI Server
 fastapi>=0.115.0

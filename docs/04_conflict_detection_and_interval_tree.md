@@ -1,4 +1,4 @@
-# Cortex QRTOS — Conflict Detection & Interval-Tree Scaling
+# CORTEX — Conflict Detection & Interval-Tree Scaling
 
 ## Temporal Resource Exclusivity
 
@@ -11,7 +11,7 @@ $$I = \big[ t_{\text{entry}}, t_{\text{exit}} \big)$$
 
 ![Conflict Detection State Machine](images/media_1789238967798.png)
 
-When an overlap occurs between two active trains on the same track segment, Cortex enforces a deterministic lifecycle:
+When an overlap occurs between two active trains on the same track segment, CORTEX enforces a deterministic lifecycle:
 
 ```mermaid
 stateDiagram-v2

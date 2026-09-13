@@ -1,10 +1,10 @@
-# Cortex QRTOS — Architecture Overview
+# CORTEX — Architecture Overview
 
 ## System Mission & Core Problem
 
-**Cortex QRTOS** (Quasi-Real-Time Operating System) is an intelligent train traffic dispatching and conflict-resolution engine designed for single-track and mixed-priority railway corridors.
+**CORTEX (Constraint-Optimised Real-Time Traffic EXpert)** is an intelligent real-time decision-support system for Indian Railways traffic management using Time-Expanded Graph search, Constraint Programming, Machine Learning, and Generative AI explainability.
 
-Single-track corridors require opposing and overtaking trains to be dynamically scheduled across physical crossing loops and station sidings. When delays occur, human controllers often face high cognitive load. Cortex automates conflict detection, computes priority-optimal dispatch decisions, provides transparent explainability accordions, and calculates mathematical time-distance (Marey) trajectories for controller review.
+Single-track corridors require opposing and overtaking trains to be dynamically scheduled across physical crossing loops and station sidings. When delays occur, human controllers often face high cognitive load. CORTEX automates conflict detection, computes priority-optimal dispatch decisions, provides transparent explainability accordions, and calculates mathematical time-distance (Marey) trajectories for controller review.
 
 ---
 

@@ -1,6 +1,6 @@
-# Cortex QRTOS — Backend Engine
+# CORTEX — Backend Engine
 
-FastAPI and mathematical algorithms for the Cortex Quasi-Real-Time Operating System.
+FastAPI backend and mathematical algorithms for **CORTEX (Constraint-Optimised Real-Time Traffic EXpert)**.
 
 ## Architecture
 
