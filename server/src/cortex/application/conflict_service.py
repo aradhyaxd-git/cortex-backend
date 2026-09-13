@@ -5,6 +5,7 @@ from cortex.domain.models import Train, Segment
 from cortex.domain.enums import DecisionStatus
 from cortex.domain.state_machine import transition
 from cortex.engine.conflict.detector import OccupationInterval, detect_conflict
+from cortex.engine.conflict.interval_tree import CorridorIntervalIndex
 from cortex.engine.decision.base import Conflict, Decision
 from cortex.engine.decision.greedy import GreedyDecisionEngine
 from cortex.infra.db.repositories import DecisionRepository, AuditRepository
@@ -27,8 +28,9 @@ class ConflictService:
 
     def check_and_resolve(self, trains: List[Train]) -> Tuple[List[Train], Optional[Decision]]:
         """
-        Detects conflicts between active trains, resolves priority, logs audit trail,
-        promotes decision to PENDING for controller review, and sets hold state.
+        Detects conflicts between active trains using an augmented interval tree index,
+        resolves priority, logs audit trail, promotes decision to PENDING for controller
+        review, and sets hold state.
         """
         now = utc_now()
         updated_trains = [t.model_copy() for t in trains]
@@ -41,62 +43,55 @@ class ConflictService:
                     updated_trains[i] = t.model_copy(update={"is_held": True})
             return updated_trains, active_decision
 
-        # Pairwise conflict detection on shared segments
-        for i in range(len(trains)):
-            for j in range(i + 1, len(trains)):
-                t_a = trains[i]
-                t_b = trains[j]
-
-                # If on the same segment
-                if t_a.position.segment_id == t_b.position.segment_id:
-                    seg_id = t_a.position.segment_id
-
-                    # Assume nominal transit window of 15 minutes
-                    interval_a = OccupationInterval(
-                        train_id=t_a.train_id,
-                        segment_id=seg_id,
-                        entry_time=now,
-                        exit_time=now + timedelta(minutes=15),
-                        priority=t_a.priority_class.value
+        # Build spatial-temporal corridor interval index
+        corridor_index = CorridorIntervalIndex()
+        for idx, t in enumerate(trains):
+            if t.position and t.position.segment_id:
+                corridor_index.add_reservation(
+                    OccupationInterval(
+                        train_id=t.train_id,
+                        segment_id=t.position.segment_id,
+                        entry_time=now + timedelta(minutes=idx * 5),
+                        exit_time=now + timedelta(minutes=idx * 5 + 15),
+                        priority=t.priority_class.value
                     )
-                    interval_b = OccupationInterval(
-                        train_id=t_b.train_id,
-                        segment_id=seg_id,
-                        entry_time=now + timedelta(minutes=5),
-                        exit_time=now + timedelta(minutes=20),
-                        priority=t_b.priority_class.value
-                    )
+                )
 
-                    if detect_conflict(interval_a, interval_b):
-                        conflict = Conflict(train_a=interval_a, train_b=interval_b, segment_id=seg_id)
-                        decision = self.engine.resolve(conflict)
+        # Query all overlapping intervals across segments
+        conflicts = corridor_index.find_all_conflicts()
+        if conflicts:
+            interval_a, interval_b = conflicts[0]
+            seg_id = interval_a.segment_id
 
-                        # Auto-promote RECOMMENDATION -> PENDING for controller action
-                        promoted_status = transition(decision.status, DecisionStatus.PENDING)
-                        decision.status = promoted_status
+            conflict = Conflict(train_a=interval_a, train_b=interval_b, segment_id=seg_id)
+            decision = self.engine.resolve(conflict)
 
-                        # Persist to database
-                        self.decision_repo.save(decision)
+            # Auto-promote RECOMMENDATION -> PENDING for controller action
+            promoted_status = transition(decision.status, DecisionStatus.PENDING)
+            decision.status = promoted_status
 
-                        # Log recommendation to audit repository
-                        self.audit_repo.log_decision(
-                            decision_id=decision.decision_id,
-                            action="RECOMMENDATION_GENERATED",
-                            controller_id="system",
-                            details={
-                                "train_to_continue": decision.train_to_continue,
-                                "train_to_hold": decision.train_to_hold,
-                                "segment_id": seg_id,
-                                "reason": decision.reason,
-                                "status": decision.status.value
-                            }
-                        )
+            # Persist to database
+            self.decision_repo.save(decision)
 
-                        # Mark losing train as held
-                        for idx, train in enumerate(updated_trains):
-                            if train.train_id == decision.train_to_hold:
-                                updated_trains[idx] = train.model_copy(update={"is_held": True})
+            # Log recommendation to audit repository
+            self.audit_repo.log_decision(
+                decision_id=decision.decision_id,
+                action="RECOMMENDATION_GENERATED",
+                controller_id="system",
+                details={
+                    "train_to_continue": decision.train_to_continue,
+                    "train_to_hold": decision.train_to_hold,
+                    "segment_id": seg_id,
+                    "reason": decision.reason,
+                    "status": decision.status.value
+                }
+            )
 
-                        return updated_trains, decision
+            # Mark losing train as held
+            for idx, train in enumerate(updated_trains):
+                if train.train_id == decision.train_to_hold:
+                    updated_trains[idx] = train.model_copy(update={"is_held": True})
+
+            return updated_trains, decision
 
         return updated_trains, None
