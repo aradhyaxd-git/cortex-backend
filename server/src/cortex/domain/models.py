@@ -36,3 +36,5 @@ class Train(BaseModel):
     priority_class: PriorityClass
     route: Route
     position: Position
+    is_held: bool = False
+    delay_minutes: float = 0.0
