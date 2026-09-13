@@ -1,4 +1,8 @@
 # scripts/seed_mvp_world.py
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+
 from cortex.config import get_mvp_world
 
 def create_mvp_world() -> dict:

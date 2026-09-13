@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="Cortex QRTOS API",
+    title="Cortex API Built by Aradhya",
     version="1.0.0",
     description="Real-Time Train Operating System Backend with TEG, Modified Dijkstra, & Marey Analytics",
     lifespan=lifespan
