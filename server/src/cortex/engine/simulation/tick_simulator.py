@@ -11,6 +11,10 @@ class TickSimulator:
         return [self._move_train(train) for train in trains]
 
     def _move_train(self, train: Train) -> Train:
+        if getattr(train, "is_held", False):
+            current_delay = getattr(train, "delay_minutes", 0.0)
+            return train.model_copy(update={"delay_minutes": round(current_delay + 5.0, 1)})
+
         segment = self.segments_by_id[train.position.segment_id]
         route = train.route.segments
         current_idx = route.index(train.position.segment_id)
@@ -21,6 +25,14 @@ class TickSimulator:
             next_segment = self.segments_by_id[next_seg_id]
             if segment.from_station in (next_segment.from_station, next_segment.to_station):
                 heading_towards_zero = True
+        elif current_idx > 0:
+            prev_seg_id = route[current_idx - 1]
+            prev_segment = self.segments_by_id[prev_seg_id]
+            # If we entered this segment at to_station, we move towards from_station (0.0)
+            if segment.to_station in (prev_segment.from_station, prev_segment.to_station):
+                heading_towards_zero = True
+            else:
+                heading_towards_zero = False
         else:
             if train.position.distance > 0.0:
                 heading_towards_zero = True
