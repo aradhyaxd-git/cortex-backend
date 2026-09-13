@@ -1,0 +1,16 @@
+# Cortex QRTOS Backend Dependencies
+
+# Core Web Framework & ASGI Server
+fastapi>=0.115.0
+uvicorn>=0.30.0
+starlette>=0.40.0
+
+# Domain & Data Modeling
+pydantic>=2.8.0
+sqlalchemy>=2.0.0
+
+# Concurrency & Networking
+anyio>=4.0.0
+
+# Testing & Quality Assurance
+pytest>=8.0.0

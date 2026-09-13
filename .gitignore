@@ -1,0 +1,29 @@
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Virtual environments & Local Env
+.env
+.venv/
+venv/
+env/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+server/cortex.db
+
+# Node / Frontend artifacts (if any)
+node_modules/
+dist/
+build/
