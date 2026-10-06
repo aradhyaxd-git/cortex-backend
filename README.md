@@ -35,6 +35,8 @@ All architectural design specifications, algorithms, diagrams, and API contracts
 | [**04. Conflict Detection & Interval Tree**](docs/04_conflict_detection_and_interval_tree.md) | AVL Augmented Interval Tree ($O(n \log n)$ scaling), subtree `max_high` pruning, corridor spatial partitioning, and decision lifecycle state machine. |
 | [**05. API Contracts Matrix**](docs/05_api_contracts_matrix.md) | Complete REST & WebSocket specification for all 13 routing endpoints, including D3.js Marey Diagram, Canvas geometry, and explainability accordions. |
 | [**06. Developer Guide & Contributing**](docs/06_developer_guide_and_contributing.md) | Local environment setup, test suites, live server execution, and the standard **Branch Cut & Pull Request (PR)** engineering workflow. |
+| [**07. Machine Learning Delay Prediction**](docs/07_machine_learning_delay_prediction.md) | Empirical ML benchmark on Sep 2024 Indian Railways operations (11,460 events), XGBoost achieving $6.42\text{ min}$ MAE on future test set, and feature importances. |
+| [**Jupyter Research Notebook**](notebooks/01_delay_prediction_research.ipynb) | Interactive notebook with EDA, delay curves, correlation matrices, and model parity scatter plots. |
 
 ---
 
