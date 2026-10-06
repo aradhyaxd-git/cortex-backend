@@ -36,6 +36,12 @@ class DispatcherCopilot:
     """
 
     DEFAULT_MODEL = "qwen/qwen3.8-27b"
+    FALLBACK_MODELS = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+    ]
 
     def __init__(
         self,
@@ -114,39 +120,47 @@ class DispatcherCopilot:
                     f"- \"controller_order\": Formal telegram/control order to Section Controller and Station Master."
                 )
 
-                response = self._client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                "You are an expert Indian Railways railway dispatching engine. "
-                                "You always output strictly valid JSON matching the requested schema without markdown backticks."
-                            )
-                        },
-                        {"role": "user", "content": prompt}
-                    ],
-                    response_format={"type": "json_object"},
-                    max_tokens=800,
-                    temperature=0.2
-                )
+                models_to_try = [self.model] + [m for m in self.FALLBACK_MODELS if m != self.model]
+                last_err = None
+                for model_candidate in models_to_try:
+                    try:
+                        response = self._client.chat.completions.create(
+                            model=model_candidate,
+                            messages=[
+                                {
+                                    "role": "system",
+                                    "content": (
+                                        "You are an expert Indian Railways railway dispatching engine. "
+                                        "You always output strictly valid JSON matching the requested schema without markdown backticks."
+                                    )
+                                },
+                                {"role": "user", "content": prompt}
+                            ],
+                            response_format={"type": "json_object"},
+                            max_tokens=800,
+                            temperature=0.2
+                        )
 
-                content = response.choices[0].message.content.strip()
-                data = json.loads(content)
+                        content = response.choices[0].message.content.strip()
+                        data = json.loads(content)
 
-                return DispatcherExplanation(
-                    situation=data.get("situation", f"Contention on {segment_id} between {winner_id} and {loser_id}."),
-                    decision=data.get("decision", f"Hold Train {loser_id} for {hold_duration_min} min; clear main line for {winner_id}."),
-                    reasoning=data.get("reasoning", f"{winner_id} ({winner_priority}) takes precedence over {loser_id} ({loser_priority})."),
-                    expected_outcome=data.get("expected_outcome", f"{winner_id} clears without delay; corridor delay reduced by {benefit_min} min."),
-                    future_consequences=data.get("future_consequences", f"{loser_id} clears onto {segment_id} once block occupancy resets."),
-                    regulatory_code=data.get("regulatory_code", "IR G&SR Rule 4.35 (Precedence of Trains at Crossing Stations)"),
-                    passenger_announcement=data.get("passenger_announcement", f"Attention passengers, Train {winner_name} will pass through platform 1 shortly."),
-                    controller_order=data.get("controller_order", f"CONTROL ORDER: Hold {loser_id} on siding loop; grant line clear to {winner_id} on S2."),
-                    is_llm_generated=True,
-                    model_used=self.model
-                )
+                        return DispatcherExplanation(
+                            situation=data.get("situation", f"Contention on {segment_id} between {winner_id} and {loser_id}."),
+                            decision=data.get("decision", f"Hold Train {loser_id} for {hold_duration_min} min; clear main line for {winner_id}."),
+                            reasoning=data.get("reasoning", f"{winner_id} ({winner_priority}) takes precedence over {loser_id} ({loser_priority})."),
+                            expected_outcome=data.get("expected_outcome", f"{winner_id} clears without delay; corridor delay reduced by {benefit_min} min."),
+                            future_consequences=data.get("future_consequences", f"{loser_id} clears onto {segment_id} once block occupancy resets."),
+                            regulatory_code=data.get("regulatory_code", "IR G&SR Rule 4.35 (Precedence of Trains at Crossing Stations)"),
+                            passenger_announcement=data.get("passenger_announcement", f"Attention passengers, Train {winner_name} will pass through platform 1 shortly."),
+                            controller_order=data.get("controller_order", f"CONTROL ORDER: Hold {loser_id} on siding loop; grant line clear to {winner_id} on S2."),
+                            is_llm_generated=True,
+                            model_used=model_candidate
+                        )
+                    except Exception as err:
+                        last_err = err
+                        logger.warning(f"Groq call with {model_candidate} failed: {err}")
 
+                logger.warning(f"All Groq LLM candidates failed (last error: {last_err}). Falling back to deterministic template.")
             except Exception as e:
                 logger.warning(f"Groq LLM explanation generation failed: {e}. Falling back to deterministic template.")
 

@@ -265,22 +265,25 @@ class CPSATDecisionEngine(DecisionEngine):
                 if matching_caps and min(matching_caps) == 1:
                     model.AddNoOverlap(p_intervals)
 
-        # 4. Enforce Headway Separation on Shared Segments
-        for seg_id in segment_capacities:
-            trains_on_seg = [t for t in train_requests if seg_id in t.route_segments]
-            for i in range(len(trains_on_seg)):
-                for j in range(i + 1, len(trains_on_seg)):
-                    t1 = trains_on_seg[i]
-                    t2 = trains_on_seg[j]
+        # 4. Enforce Headway Separation on Shared Single-Track Segments (capacity == 1)
+        # Segments with capacity >= 2 (e.g. crossing loops, double track) allow multiple trains
+        # to dwell concurrently up to capacity via AddCumulative without pairwise mutual exclusion.
+        for seg_id, cap in segment_capacities.items():
+            if cap == 1:
+                trains_on_seg = [t for t in train_requests if seg_id in t.route_segments]
+                for i in range(len(trains_on_seg)):
+                    for j in range(i + 1, len(trains_on_seg)):
+                        t1 = trains_on_seg[i]
+                        t2 = trains_on_seg[j]
 
-                    s1_start, s1_end, _ = train_segment_intervals[(t1.train_id, seg_id)]
-                    s2_start, s2_end, _ = train_segment_intervals[(t2.train_id, seg_id)]
+                        s1_start, s1_end, _ = train_segment_intervals[(t1.train_id, seg_id)]
+                        s2_start, s2_end, _ = train_segment_intervals[(t2.train_id, seg_id)]
 
-                    # Boolean precedence variable
-                    b = model.NewBoolVar(f"prec_{t1.train_id}_{t2.train_id}_{seg_id}")
+                        # Boolean precedence variable
+                        b = model.NewBoolVar(f"prec_{t1.train_id}_{t2.train_id}_{seg_id}")
 
-                    model.Add(s2_start >= s1_end + headway_min).OnlyEnforceIf(b)
-                    model.Add(s1_start >= s2_end + headway_min).OnlyEnforceIf(b.Not())
+                        model.Add(s2_start >= s1_end + headway_min).OnlyEnforceIf(b)
+                        model.Add(s1_start >= s2_end + headway_min).OnlyEnforceIf(b.Not())
 
         # 5. Objective: Minimize total priority-weighted tardiness at destination
         # Incorporates ML predicted delay into the tardiness penalty weight
@@ -310,7 +313,8 @@ class CPSATDecisionEngine(DecisionEngine):
         # 6. Solve with CP-SAT
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = limit
-        solver.parameters.num_workers = 4
+        solver.parameters.num_workers = 1
+        solver.parameters.random_seed = 42
         status = solver.Solve(model)
 
         elapsed = time.perf_counter() - start_time
