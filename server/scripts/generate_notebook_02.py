@@ -123,19 +123,43 @@ all_times = []
 for train_req in res["train_requests"]:
     t_id = train_req["train_id"]
     prio = train_req["priority"]
+    route = train_req["route"]
     t_occs = schedules.get(t_id, [])
+    
+    # Determine train direction:
+    # DOWN trains (East to West, e.g. BXR -> DDU -> PRYJ, decreasing km)
+    # UP trains (West to East, increasing km)
+    is_down = False
+    if len(route) >= 2 and route[0] == "SEG_DDU_BXR" and route[1] == "SEG_PRYJ_DDU":
+        is_down = True
+    elif t_id in ("IR_2249", "IR_2393"):
+        is_down = True
+
     t_pts = []
     for occ in t_occs:
         seg = occ["segment_id"]
-        if seg == "SEG_CNB_PRYJ":
-            t_pts.append((occ["entry_min"], 0.0))
-            t_pts.append((occ["exit_min"], 194.0))
+        if seg == "SEG_DDU_BXR":
+            if is_down:
+                t_pts.append((occ["entry_min"], 437.0))
+                t_pts.append((occ["exit_min"], 347.0))
+            else:
+                t_pts.append((occ["entry_min"], 347.0))
+                t_pts.append((occ["exit_min"], 437.0))
         elif seg == "SEG_PRYJ_DDU":
-            t_pts.append((occ["entry_min"], 194.0))
-            t_pts.append((occ["exit_min"], 347.0))
-        elif seg == "SEG_DDU_BXR":
-            t_pts.append((occ["entry_min"], 347.0))
-            t_pts.append((occ["exit_min"], 437.0))
+            if is_down:
+                t_pts.append((occ["entry_min"], 347.0))
+                t_pts.append((occ["exit_min"], 194.0))
+            else:
+                t_pts.append((occ["entry_min"], 194.0))
+                t_pts.append((occ["exit_min"], 347.0))
+        elif seg == "SEG_CNB_PRYJ":
+            if is_down:
+                t_pts.append((occ["entry_min"], 194.0))
+                t_pts.append((occ["exit_min"], 0.0))
+            else:
+                t_pts.append((occ["entry_min"], 0.0))
+                t_pts.append((occ["exit_min"], 194.0))
+
     if len(t_pts) >= 2:
         t_pts = sorted(t_pts, key=lambda p: p[0])
         xs = [p[0] for p in t_pts]
@@ -143,7 +167,7 @@ for train_req in res["train_requests"]:
         all_times.extend(xs)
         col = palette.get(t_id, "#334155")
         ax3.plot(xs, ys, marker='o', lw=2.5, color=col, label=f"{t_id} ({prio})")
-        ax3.text(xs[0] + 5, ys[0] + 5, t_id, color=col, fontweight="bold", fontsize=9)
+        ax3.text(xs[0] + 5, ys[0] + (5 if not is_down else -12), t_id, color=col, fontweight="bold", fontsize=9)
 
 min_x = min(all_times) if all_times else 0
 max_x = max(all_times) if all_times else 1440
@@ -427,19 +451,39 @@ cells = [
             "for train_req in res['train_requests']:\n",
             "    t_id = train_req['train_id']\n",
             "    prio = train_req['priority']\n",
+            "    route = train_req['route']\n",
             "    t_occs = schedules.get(t_id, [])\n",
+            "    is_down = False\n",
+            "    if len(route) >= 2 and route[0] == 'SEG_DDU_BXR' and route[1] == 'SEG_PRYJ_DDU':\n",
+            "        is_down = True\n",
+            "    elif t_id in ('IR_2249', 'IR_2393'):\n",
+            "        is_down = True\n",
+            "\n",
             "    t_pts = []\n",
             "    for occ in t_occs:\n",
             "        seg = occ['segment_id']\n",
-            "        if seg == 'SEG_CNB_PRYJ':\n",
-            "            t_pts.append((occ['entry_min'], 0.0))\n",
-            "            t_pts.append((occ['exit_min'], 194.0))\n",
+            "        if seg == 'SEG_DDU_BXR':\n",
+            "            if is_down:\n",
+            "                t_pts.append((occ['entry_min'], 437.0))\n",
+            "                t_pts.append((occ['exit_min'], 347.0))\n",
+            "            else:\n",
+            "                t_pts.append((occ['entry_min'], 347.0))\n",
+            "                t_pts.append((occ['exit_min'], 437.0))\n",
             "        elif seg == 'SEG_PRYJ_DDU':\n",
-            "            t_pts.append((occ['entry_min'], 194.0))\n",
-            "            t_pts.append((occ['exit_min'], 347.0))\n",
-            "        elif seg == 'SEG_DDU_BXR':\n",
-            "            t_pts.append((occ['entry_min'], 347.0))\n",
-            "            t_pts.append((occ['exit_min'], 437.0))\n",
+            "            if is_down:\n",
+            "                t_pts.append((occ['entry_min'], 347.0))\n",
+            "                t_pts.append((occ['exit_min'], 194.0))\n",
+            "            else:\n",
+            "                t_pts.append((occ['entry_min'], 194.0))\n",
+            "                t_pts.append((occ['exit_min'], 347.0))\n",
+            "        elif seg == 'SEG_CNB_PRYJ':\n",
+            "            if is_down:\n",
+            "                t_pts.append((occ['entry_min'], 194.0))\n",
+            "                t_pts.append((occ['exit_min'], 0.0))\n",
+            "            else:\n",
+            "                t_pts.append((occ['entry_min'], 0.0))\n",
+            "                t_pts.append((occ['exit_min'], 194.0))\n",
+            "\n",
             "    if len(t_pts) >= 2:\n",
             "        t_pts = sorted(t_pts, key=lambda p: p[0])\n",
             "        xs = [p[0] for p in t_pts]\n",
@@ -447,7 +491,7 @@ cells = [
             "        all_times.extend(xs)\n",
             "        col = palette.get(t_id, '#334155')\n",
             "        ax.plot(xs, ys, marker='o', lw=2.5, color=col, label=f\"{t_id} ({prio})\")\n",
-            "        ax.text(xs[0] + 5, ys[0] + 5, t_id, color=col, fontweight='bold', fontsize=9)\n",
+            "        ax.text(xs[0] + 5, ys[0] + (5 if not is_down else -12), t_id, color=col, fontweight='bold', fontsize=9)\n",
             "\n",
             "min_x = min(all_times) if all_times else 0\n",
             "max_x = max(all_times) if all_times else 1440\n",
