@@ -50,6 +50,8 @@ cortex.db
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
 
 # OS generated files
 .DS_Store

@@ -23,6 +23,21 @@ env/
 *.sqlite3
 server/cortex.db
 
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Heavy raw datasets (>5MB / up to 90MB raw dumps)
+dataset/train_delays_Sep2024.json
+dataset/train_routes_delays_Sep2024.csv
+dataset/train_routes_Sep2024.csv
+
+# IDE & Editor caches
+.idea/
+.vscode/
+*.swp
+*.swo
+
 # Node / Frontend artifacts (if any)
 node_modules/
 dist/
