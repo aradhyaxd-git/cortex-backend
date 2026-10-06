@@ -18,6 +18,11 @@ class ExplanationDetailSchema(BaseModel):
     reasoning: str
     expected_outcome: str
     future_consequences: str
+    regulatory_code: Optional[str] = None
+    passenger_announcement: Optional[str] = None
+    controller_order: Optional[str] = None
+    is_llm_generated: bool = False
+    model_used: Optional[str] = None
 
 class DecisionResponse(BaseModel):
     decision_id: str

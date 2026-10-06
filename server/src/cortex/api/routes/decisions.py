@@ -7,8 +7,10 @@ from cortex.api.schemas.errors import ErrorResponse
 from cortex.api.deps import get_decision_repository
 from cortex.infra.db.repositories import DecisionRepository
 from cortex.engine.decision.base import Decision
+from cortex.engine.llm.dispatcher_copilot import DispatcherCopilot
 
 router = APIRouter(prefix="/decisions", tags=["decisions"])
+copilot = DispatcherCopilot()
 
 def build_enriched_decision(decision: Decision) -> DecisionResponse:
     winner = decision.train_to_continue
@@ -18,12 +20,32 @@ def build_enriched_decision(decision: Decision) -> DecisionResponse:
     action_text = f"Hold Train {loser} at Station B Crossing Loop (X1) until Train {winner} clears Segment S2"
     location_text = "Segment S2 (Single Track, 40.0 km between Station B and Station C)"
 
+    exp = copilot.explain_decision(
+        winner_id=str(winner),
+        winner_name="Rajdhani Express" if "12951" in str(winner) or str(winner) == "1" else f"Train {winner}",
+        winner_priority="Class 1 (Rajdhani)",
+        loser_id=str(loser),
+        loser_name="Freight Service" if "BOXN" in str(loser) or str(loser) == "2" else f"Train {loser}",
+        loser_priority="Class 5 (Freight)",
+        segment_id="Segment S2",
+        segment_desc="Single Track, 40.0 km between Station B and Station C",
+        hold_duration_min=24,
+        benefit_min=24,
+        ml_predicted_delay_min=12.0,
+        solver_name="CP-SAT Global Constraint Optimizer"
+    )
+
     explanation = ExplanationDetailSchema(
-        situation=f"Train {winner} (Rajdhani Express) and Train {loser} (Freight Service) approaching single-track Segment S2 from opposite ends.",
-        decision=f"Hold Train {loser} at Station B Crossing Loop (X1) for 24 minutes.",
-        reasoning=f"Train {winner} carries IR Priority Class 1 (Rajdhani) vs Priority Class 5 (Freight). Single-track capacity is strictly 1 train without deadlock.",
-        expected_outcome="Train 12951 clears Segment S2 without delay; net corridor delay minimized by 24 minutes.",
-        future_consequences=f"Train {loser} is cleared onto Segment S2 immediately at tau=3 once Train {winner} exits."
+        situation=exp.situation,
+        decision=exp.decision,
+        reasoning=exp.reasoning,
+        expected_outcome=exp.expected_outcome,
+        future_consequences=exp.future_consequences,
+        regulatory_code=exp.regulatory_code,
+        passenger_announcement=exp.passenger_announcement,
+        controller_order=exp.controller_order,
+        is_llm_generated=exp.is_llm_generated,
+        model_used=exp.model_used
     )
 
     return DecisionResponse(
@@ -88,3 +110,28 @@ def list_all_decisions(
 ):
     decisions = decision_repo.get_all()
     return [build_enriched_decision(d) for d in decisions]
+
+
+@router.post(
+    "/resolve-real-corridor",
+    summary="Solve authentic Indian Railways corridor using CP-SAT and Groq",
+    status_code=status.HTTP_200_OK
+)
+def resolve_real_corridor(
+    date: str = "2024-09-15",
+    max_trains: int = 6,
+    time_limit_seconds: float = 3.0
+):
+    """
+    Ingests authentic Indian Railways timetable and recorded delay records
+    from September 2024 (Grand Chord corridor: CNB-PRYJ-DDU-BXR), solves the
+    multi-train simultaneous schedule using CP-SAT, and generates a natural-language
+    operational explanation using Groq LLM Copilot.
+    """
+    from cortex.engine.dataset_corridor_loader import RealDatasetCorridor
+    loader = RealDatasetCorridor()
+    return loader.solve_real_corridor_with_cpsat(
+        date=date,
+        max_trains=max_trains,
+        time_limit_seconds=time_limit_seconds
+    )

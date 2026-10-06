@@ -14,3 +14,19 @@ anyio>=4.0.0
 
 # Testing & Quality Assurance
 pytest>=8.0.0
+
+# Operations Research & Constraint Programming Solvers
+ortools>=9.10.0
+
+# Machine Learning & Data Pipeline
+numpy>=2.0.0
+pandas>=2.0.0
+scikit-learn>=1.5.0
+xgboost>=2.1.0
+joblib>=1.4.0
+matplotlib>=3.9.0
+seaborn>=0.13.0
+
+# LLM & Explainability Copilot
+groq>=0.9.0
+python-dotenv>=1.0.0
